@@ -632,14 +632,14 @@ class SmartHomePredictor:
             
             # Create configuration dictionary
             configuration = {
-                'variant': variant,
-                'name': config_names[variant],
-                'description': config_descriptions[variant],
-                'weights': weights,
-                'optimization_result': optimization_result,
-                'room_allocations': room_allocations,
-                'total_cost': optimization_result['total_cost'],
-                'total_components': len(optimization_result['selected_components'])
+            'variant': variant,
+            'name': config_names[variant],
+            'description': config_descriptions[variant],
+            'weights': weights,
+            'optimization_result': optimization_result,
+            'room_allocations': room_allocations,
+            'total_cost': optimization_result['total_cost'],
+            'total_components': len(optimization_result['selected_components'])
             }
             
             configurations.append(configuration)
@@ -815,18 +815,28 @@ class SmartHomePredictor:
                                 component = components_by_category[category].pop(0)
                                 room['components'].append(component)
         
-        # Allocate any remaining components to rooms that can use them
-        for category, category_components in components_by_category.items():
-            for component in category_components:
-                # Find a room that can use this component
-                for room in rooms:
-                    room_type = room['name'].split(' ')[0] if ' ' in room['name'] else room['name']
-                    if room_type in self.room_types and self.room_types[room_type].get(category, 0) > 0:
-                        room['components'].append(component)
+        # Check if any room has zero components and redistribute if needed
+        if any(len(room['components']) == 0 for room in rooms):
+            # Sort rooms by number of components (ascending)
+            rooms_by_component_count = sorted(rooms, key=lambda r: len(r['components']))
+            
+            # Distribute remaining components to rooms with fewer components
+            for category, category_components in components_by_category.items():
+                for component in category_components[:]:  # Use a copy for iteration
+                    if not category_components:
                         break
-        
+                        
+                    # Find the room with the fewest components
+                    target_room = rooms_by_component_count[0]
+                    
+                    # Add component to room
+                    target_room['components'].append(component)
+                    components_by_category[category].remove(component)
+                    
+                    # Re-sort rooms by component count
+                    rooms_by_component_count = sorted(rooms, key=lambda r: len(r['components']))
+                    
         return rooms
-    
     def visualize_component_distribution(self, configuration):
         """
         Visualize component distribution by category
