@@ -1,0 +1,367 @@
+/* Modern Dark Theme with Purple Accents */
+:root {
+  --primary-color: #6c63ff;
+  --primary-light: #8a7fff;
+  --primary-dark: #5046e5;
+  --secondary-color: #9d50bb;
+  --dark-bg: #1a1a2e;
+  --card-bg: #242444;
+  --text-light: #ffffff;
+  --text-muted: #b0b0c0;
+  --success: #4ecca3;
+  --warning: #ffb142;
+  --danger: #ff6b6b;
+  --info: #54a0ff;
+}
+
+/* Main Styles */
+body {
+  background: linear-gradient(135deg, #1a1a2e, #242444, #1a1a2e);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-light);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin-top: 30px;
+  margin-bottom: 50px;
+  padding: 20px;
+}
+
+/* Header Section */
+.header {
+  background-color: rgba(36, 36, 68, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  padding: 30px;
+  margin-bottom: 35px;
+  text-align: center;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Update the header icon styling */
+.header-icon {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #8a7fff;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(138, 127, 255, 0.6);
+}
+
+.header-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-light);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Card & Config Details Styles */
+.card {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 25px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.card-header {
+  border-radius: 15px 15px 0 0;
+  font-weight: 600;
+  padding: 18px 22px;
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  letter-spacing: 0.5px;
+}
+
+/* Configuration Card (Selector) */
+.config-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  background-color: var(--card-bg);
+}
+
+.config-card.active {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 20px rgba(138, 127, 255, 0.5);
+}
+
+.config-card .card-header {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+  color: var(--text-light);
+}
+
+/* Budget Summary Styles */
+.budget-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.budget-item {
+  background-color: rgba(50, 50, 80, 0.7);
+  backdrop-filter: blur(5px);
+  border-radius: 15px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  margin: 0 8px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex: 1;
+}
+
+.budget-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+}
+
+.budget-total {
+  background: linear-gradient(135deg, #4b4b6d, #3a3a5a);
+}
+
+.budget-used {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+}
+
+.budget-remaining {
+  background: linear-gradient(135deg, var(--secondary-color), #6e48aa);
+}
+
+.budget-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: 12px;
+  color: var(--text-light);
+}
+
+/* Priority Badge Styles */
+.priority-badge {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+  color: white;
+  padding: 7px 14px;
+  border-radius: 25px;
+  margin-right: 12px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  display: inline-block;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Chart Container & Image Styles */
+.chart-container {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  margin-bottom: 25px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chart-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.chart-title {
+  color: var(--text-light);
+  margin-bottom: 18px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 12px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.chart-img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+
+/* Room Tabs & Room Card Styles */
+.nav-tabs {
+  border-bottom: 2px solid var(--primary-light);
+  margin-bottom: 25px;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 12px 18px;
+  transition: all 0.3s ease;
+  border-radius: 10px 10px 0 0;
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--text-light);
+  background-color: rgba(138, 127, 255, 0.2);
+  border-bottom: 3px solid var(--primary-light);
+}
+
+.nav-tabs .nav-link:hover {
+  background-color: rgba(138, 127, 255, 0.1);
+  color: var(--text-light);
+}
+
+/* Component Table Styles */
+.component-table {
+  width: 100%;
+  margin-top: 18px;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.component-table th, 
+.component-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.component-table th {
+  background-color: rgba(75, 75, 109, 0.8);
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.component-table tr:nth-child(even) {
+  background-color: rgba(42, 42, 58, 0.5);
+}
+
+.component-table tr:hover {
+  background-color: rgba(58, 58, 90, 0.7);
+}
+
+/* Button Styles */
+.btn {
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+  border: none;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-download {
+  background: linear-gradient(135deg, var(--secondary-color), #6e48aa);
+  border: none;
+  color: white;
+}
+
+.btn-download:hover {
+  background: linear-gradient(135deg, #8e44ad, #5d3b7c);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* View Details Button */
+.view-details, .view-config-btn {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.view-details:hover, .view-config-btn:hover {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Summary Card */
+.summary-card {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  margin-bottom: 35px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Text colors */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Slider container and value indicator styles */
+.slider-container {
+    margin-bottom: 35px;  /* Increased from 25px to add more space */
+    position: relative;
+}
+
+.slider-value {
+    font-weight: bold;
+    color: white;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    position: absolute;
+    top: -5px;  /* Position above the slider */
+    transform: translateX(-50%);  /* Center horizontally */
+    background-color: var(--primary-light);
+    box-shadow: 0 0 10px rgba(138, 127, 255, 0.5);
+    z-index: 10;  /* Ensure it's above other elements */
+}
+
+/* Add more space below the slider description */
+.slider-description {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    color: var(--text-muted);
+}
+
+/* Slider track and thumb styles */
+.form-range {
+    margin-top: 15px;  /* Add space above the slider */
+    margin-bottom: 15px;  /* Add space below the slider */
+}

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Home Configuration Results</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <!-- Chart.js -->
+  <!-- First, make sure you have the proper Chart.js script in your head section -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- In the head section, make sure you have this line: -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    /* Merged Styling from both templates */
+    body {
+      background: linear-gradient(135deg, #1a1a2e, #242444, #1a1a2e);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #ffffff;
+    }
+    .container {
+      max-width: 1200px;
+      margin-top: 30px;
+      margin-bottom: 50px;
+    }
+    .header {
+      background-color: rgba(36, 36, 68, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      padding: 25px;
+      margin-bottom: 30px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .header-icon i {
+      font-size: 3rem;
+      color: #8a7fff;
+    }
+    .config-card.active {
+      border: 2px solid #8a7fff;
+      box-shadow: 0 0 20px rgba(138, 127, 255, 0.5);
+    }
+    .neon-text {
+      color: #a5a0ff;
+      text-shadow: 0 0 10px rgba(138, 127, 255, 0.8), 0 0 20px rgba(138, 127, 255, 0.5);
+    }
+    .summary-card,
+    .chart-container,
+    .room-card {
+      background-color: rgba(30, 30, 50, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .budget-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    .budget-item {
+      text-align: center;
+      padding: 10px;
+      border-radius: 15px;
+      flex: 1;
+      margin: 0 5px;
+      background-color: rgba(50, 50, 80, 0.7);
+      color: #ffffff;
+    }
+    .budget-total { background: linear-gradient(135deg, #4b4b6d, #3a3a5a); }
+    .budget-used { background: linear-gradient(135deg, #6c63ff, #5a52d5); }
+    .budget-remaining { background: linear-gradient(135deg, #9d50bb, #6e48aa); }
+    .budget-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-top: 5px;
+      color: #ffffff;
+    }
+    .priority-badge {
+      background: linear-gradient(135deg, #8a7fff, #6c63ff);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      margin-right: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .chart-title {
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      border-bottom: 2px solid #8a7fff;
+      padding-bottom: 12px;
+    }
+    .chart-img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Improved table styling for better readability */
+    .table, .component-table {
+      color: #ffffff !important;
+      background-color: rgba(30, 30, 50, 0.5);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+    }
+    
+    .table th, .component-table th {
+      background-color: rgba(75, 75, 109, 0.8);
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+      padding: 12px 15px;
+      text-align: left;
+    }
+    
+    .table td, .component-table td {
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.1);
+      padding: 12px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .table-striped > tbody > tr:nth-of-type(odd),
+    .component-table > tbody > tr:nth-of-type(odd) {
+      background-color: rgba(42, 42, 58, 0.7);
+    }
+    
+    .table-striped > tbody > tr:nth-of-type(even),
+    .component-table > tbody > tr:nth-of-type(even) {
+      background-color: rgba(50, 50, 70, 0.7);
+    }
+    
+    .table tr:hover, .component-table tr:hover {
+      background-color: rgba(138, 127, 255, 0.2) !important;
+    }
+    
+    /* Badge styling for component summary */
+    .badge {
+      background: linear-gradient(135deg, #8a7fff, #6c63ff);
+      color: white !important;
+      padding: 8px 12px;
+      border-radius: 20px;
+      margin: 5px;
+      font-weight: 500;
+      display: inline-block;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Make sure all text elements are visible */
+    .table th, .table td, .component-table th, .component-table td,
+    .badge, .card-body p, .card-header h5, .room-title {
+      color: #ffffff !important;
+    }
+    
+    .nav-tabs {
+      border-bottom: 2px solid #8a7fff;
+      margin-bottom: 20px;
+    }
+    .nav-tabs .nav-link {
+      border: none;
+      color: #b0b0c0;
+      font-weight: 600;
+    }
+    .nav-tabs .nav-link.active {
+      color: #ffffff;
+      background-color: rgba(138, 127, 255, 0.2);
+      border-bottom: 3px solid #8a7fff;
+    }
+    .nav-tabs .nav-link:hover {
+      background-color: rgba(138, 127, 255, 0.1);
+      color: #ffffff;
+    }
+    .tab-pane {
+      padding: 20px 0;
+    }
+    .btn-back {
+      background: linear-gradient(135deg, #8a7fff, #6c63ff);
+      border: none;
+      color: white;
+    }
+    .btn-download {
+      background: linear-gradient(135deg, #9d50bb, #6e48aa);
+      border: none;
+      color: white;
+    }
+    .card {
+      background-color: rgba(36, 36, 68, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .card-header {
+      background-color: rgba(75, 75, 109, 0.8);
+      color: #ffffff;
+      border-radius: 15px 15px 0 0;
+    }
+    .card-body {
+      color: #ffffff;
+    }
+    .text-muted {
+      color: #b0b0c0 !important;
+    }
+    .badge {
+      background: linear-gradient(135deg, #8a7fff, #6c63ff);
+      color: white;
+      padding: 6px 12px;
+      font-weight: 500;
+    }
+    
+    /* Make sure all text is visible */
+    h1, h2, h3, h4, h5, h6, p, td, th, span, div {
+      color: #ffffff;
+    }
+    
+    /* Ensure buttons are visible */
+    .btn-primary {
+      background: linear-gradient(135deg, #8a7fff, #6c63ff);
+      border: none;
+    }
+    .btn-success {
+      background: linear-gradient(135deg, #9d50bb, #6e48aa);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header Section -->
+    <div class="header">
+      <div class="header-icon mb-2">
+        <i class="fas fa-home" style="color: #34ebba;"></i>
+      </div>
+      <h1>Smart Home Configuration Results</h1>
+      <p class="text-muted">Optimized based on your preferences and budget</p>
+    </div>
+
+    <!-- Configuration Selector (if multiple configurations exist) -->
+    {% if configurations|length > 1 %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h4 class="mb-0">Choose Your Configuration</h4>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          {% for config in configurations %}
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 config-card {% if loop.index0 == 0 %}active{% endif %}" data-config-index="{{ loop.index0 }}">
+              <div class="card-header">
+                <h5 class="mb-0">{{ config.name }}</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Total Cost:</strong> ₹{{ "{:,.2f}".format(config.total_cost) }}</p>
+                <p><strong>Components:</strong> {{ config.optimization_result.selected_components|length }}</p>
+                <button class="btn view-config-btn" onclick="showConfiguration({{ loop.index0 }})">View Details</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Configuration Details -->
+    {% for config in configurations %}
+      {# Store outer loop index in a variable to use in nested loops #}
+      {% set config_index = loop.index0 %}
+      <div class="config-details" id="config-details-{{ config_index }}" {% if config_index != 0 %}style="display: none;"{% endif %}>
+        <!-- Summary Card -->
+        <div class="summary-card">
+          <h2>Configuration Summary</h2>
+          <div class="budget-info">
+            <div class="budget-item budget-total">
+              <div>Total Budget</div>
+              <div class="budget-value">₹{{ "{:,.2f}".format(config.budget) }}</div>
+            </div>
+            <div class="budget-item budget-used">
+              <div>Total Cost</div>
+              <div class="budget-value">₹{{ "{:,.2f}".format(config.total_cost) }}</div>
+              <div>({{ "{:.1f}%".format(config.total_cost/config.budget*100) }} of budget)</div>
+            </div>
+            <div class="budget-item budget-remaining">
+              <div>Remaining Budget</div>
+              <div class="budget-value neon-text">₹{{ "{:,.2f}".format(config.remaining_budget) }}</div>
+            </div>
+          </div>
+          <h4 class="mt-4 mb-3">Your Priorities</h4>
+          <div>
+            <span class="priority-badge"><i class="fas fa-bolt"></i> Energy Efficiency: {{ priorities.energy_efficiency }}/10</span>
+            <span class="priority-badge"><i class="fas fa-shield-alt"></i> Security: {{ priorities.security }}/10</span>
+            <span class="priority-badge"><i class="fas fa-hand-pointer"></i> Ease of Use: {{ priorities.ease_of_use }}/10</span>
+            <span class="priority-badge"><i class="fas fa-expand-arrows-alt"></i> Scalability: {{ priorities.scalability }}/10</span>
+          </div>
+        </div>
+
+        <!-- Visualization Row: Component Distribution & Cost Breakdown -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="chart-container">
+              <div class="chart-title">Component Distribution</div>
+              <img src="data:image/png;base64,{{ all_visualizations[config_index].component_distribution }}" class="chart-img" alt="Component Distribution">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-container">
+              <div class="chart-title">Cost Breakdown</div>
+              <img src="data:image/png;base64,{{ all_visualizations[config_index].cost_breakdown }}" class="chart-img" alt="Cost Breakdown">
+              
+              <!-- Add cost breakdown details below the chart -->
+              <div class="cost-breakdown-details mt-3">
+                <h6 class="text-center mb-3">Cost Details</h6>
+                <div class="row">
+                  {% for category, components in config.category_costs.items() %}
+                    <div class="col-md-6 mb-2">
+                      <div class="cost-item">
+                        <span class="category-name">{{ category }}:</span>
+                        <span class="category-cost">₹{{ "{:,.2f}".format(components.total_cost) }}</span>
+                        <span class="category-percent">({{ "{:.1f}%".format(components.total_cost/config.total_cost*100) }})</span>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Room Allocations -->
+        <!-- In the head section, make sure you have the proper Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <!-- For the configuration cards section -->
+        <div class="row mb-4">
+          {% for config in configurations %}
+          <div class="col-md-4 mb-3">
+            <div class="card config-card {% if loop.index0 == 0 %}active{% endif %}" data-config-index="{{ loop.index0 }}">
+              <div class="card-header">
+                <h5 class="mb-0">{{ config.name }}</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Total Cost:</strong> ₹{{ "{:,.2f}".format(config.total_cost) }}</p>
+                <p><strong>Components:</strong> {{ config.optimization_result.selected_components|length }}</p>
+                <button class="btn btn-primary view-config-btn">View Details</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <!-- For the room tabs section -->
+        <div class="mt-4">
+          <ul class="nav nav-tabs" id="roomTabs-{{ config_index }}" role="tablist">
+            {% for room in config.room_allocations %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link {% if loop.first %}active{% endif %}" 
+                      id="{{ room.name|replace(' ', '-')|lower }}-tab-{{ config_index }}" 
+                      data-bs-toggle="tab" 
+                      data-bs-target="#{{ room.name|replace(' ', '-')|lower }}-{{ config_index }}" 
+                      type="button" 
+                      role="tab" 
+                      aria-controls="{{ room.name|replace(' ', '-')|lower }}-{{ config_index }}" 
+                      aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
+                {{ room.name }}
+              </button>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        
+        <!-- At the bottom of your file, update the JavaScript -->
+        <script>
+          // Switch configuration details on button click
+          document.addEventListener('DOMContentLoaded', function() {
+            // Configuration switching
+            document.querySelectorAll('.view-config-btn').forEach((btn) => {
+              btn.addEventListener('click', function () {
+                // Hide all configuration details
+                document.querySelectorAll('.config-details').forEach((detail) => {
+                  detail.style.display = 'none';
+                });
+                
+                // Show selected configuration details
+                const configIndex = this.closest('.config-card').getAttribute('data-config-index');
+                document.getElementById('config-details-' + configIndex).style.display = 'block';
+        
+                // Update active class on configuration cards
+                document.querySelectorAll('.config-card').forEach((card) => {
+                  card.classList.remove('active');
+                });
+                this.closest('.config-card').classList.add('active');
+              });
+            });
+        
+            // Make first configuration visible by default
+            if (document.querySelector('.config-details')) {
+              document.querySelector('.config-details').style.display = 'block';
+            }
+            
+            // Make sure Bootstrap tabs are working
+            var triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
+            triggerTabList.forEach(function(triggerEl) {
+              // Ensure Bootstrap's tab functionality works
+              new bootstrap.Tab(triggerEl);
+            });
+          });
+        </script>
+          
+          <div class="tab-content" id="roomTabsContent-{{ config_index }}">
+            {% for room in config.room_allocations %}
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                 id="{{ room.name|replace(' ', '-')|lower }}-{{ config_index }}" 
+                 role="tabpanel" 
+                 aria-labelledby="{{ room.name|replace(' ', '-')|lower }}-tab-{{ config_index }}">
+              <div class="room-card">
+                <h3 class="room-title">{{ room.name }}</h3>
+                <!-- Component Summary -->
+                <div class="mb-3">
+                  <h5>Component Summary</h5>
+                  <div class="d-flex flex-wrap">
+                    {% set category_counts = {} %}
+                    {% for comp in room.components %}
+                      {% if comp.Category in category_counts %}
+                        {% set _ = category_counts.update({comp.Category: category_counts[comp.Category] + 1}) %}
+                      {% else %}
+                        {% set _ = category_counts.update({comp.Category: 1}) %}
+                      {% endif %}
+                    {% endfor %}
+                    {% for category, count in category_counts.items() %}
+                    <span class="badge bg-info text-dark m-1 p-2">
+                      {{ count }} × {{ category }}
+                    </span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <!-- Component Table -->
+                <table class="table table-striped component-table">
+                  <thead>
+                    <tr>
+                      <th>Component</th>
+                      <th>Category</th>
+                      <th>Price (₹)</th>
+                      <th>Efficiency</th>
+                      <th>Reliability</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for comp in room.components|sort(attribute='Category') %}
+                    <tr>
+                      <td>{{ comp.Component_Name }}</td>
+                      <td>{{ comp.Category }}</td>
+                      <td>₹{{ "{:,.2f}".format(comp.Price_INR) }}</td>
+                      <td>{{ "{:.1f}".format(comp.Efficiency) }}/10</td>
+                      <td>{{ "{:.1f}".format(comp.Reliability) }}/10</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Navigation Buttons -->
+    <div class="d-flex justify-content-center mt-4 mb-5">
+      <a href="/" class="btn btn-primary btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Configuration
+      </a>
+      <a href="/download_report" class="btn btn-success btn-download">
+        <i class="fas fa-download"></i> Download Full Report
+      </a>
+    </div>
+  </div>
+
+  <!-- JavaScript: Configuration Switching and Chart Initialization -->
+  <script>
+    // Switch configuration details on button click
+    document.querySelectorAll('.view-config-btn').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        // Hide all configuration details
+        document.querySelectorAll('.config-details').forEach((detail) => {
+          detail.style.display = 'none';
+        });
+        // Show selected configuration details
+        const configIndex = this.closest('.config-card').getAttribute('data-config-index');
+        document.getElementById('config-details-' + configIndex).style.display = 'block';
+
+        // Update active class on configuration cards
+        document.querySelectorAll('.config-card').forEach((card) => {
+          card.classList.remove('active');
+        });
+        this.closest('.config-card').classList.add('active');
+      });
+    });
+
+    
+      // Initialize Chart.js for each configuration's cost breakdown
+      {% for config in configurations %}
+      (function() {
+        var ctx = document.getElementById('costChart-{{ loop.index0 }}').getContext('2d');
+        
+        // Calculate category counts for pie chart
+        {% set category_counts = {} %}
+        {% for comp in config.optimization_result.selected_components %}
+          {% if comp.Category in category_counts %}
+            {% set _ = category_counts.update({comp.Category: category_counts[comp.Category] + comp.Price_INR}) %}
+          {% else %}
+            {% set _ = category_counts.update({comp.Category: comp.Price_INR}) %}
+          {% endif %}
+        {% endfor %}
+        
+        // Convert to arrays for Chart.js
+        var labels = Object.keys(categoryData);
+        var data = Object.values(categoryData);
+        var totalCost = {{ config.total_cost }};
+        
+        // Define colors for each category
+        var backgroundColors = [
+          '#ff6b6b', // Red
+          '#54a0ff', // Blue
+          '#ffb142', // Yellow
+          '#8a7fff', // Purple
+          '#4ecca3', // Green
+          '#ff9ff3', // Pink
+          '#f368e0', // Magenta
+          '#48dbfb', // Light Blue
+          '#feca57', // Orange
+          '#1dd1a1'  // Teal
+        ];
+        
+        new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: backgroundColors.slice(0, labels.length),
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  color: '#ffffff',
+                  font: {
+                    size: 12
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    var label = context.label || '';
+                    var value = context.raw || 0;
+                    var percentage = ((value / totalCost) * 100).toFixed(1);
+                    return label + ': ₹' + value.toLocaleString() + ' (' + percentage + '%)';
+                  }
+                },
+                backgroundColor: 'rgba(30, 30, 50, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 1,
+                padding: 10
+              }
+            }
+          }
+        });
+      })();
+      {% endfor %}
+  
+       <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Add this after the Chart.js script -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+</body>
+</html>
+
+<style>
+  /* Add this to your existing styles */
+  .cost-breakdown-details {
+    background-color: rgba(40, 40, 60, 0.7);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+  }
+  
+  .cost-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background-color: rgba(50, 50, 80, 0.5);
+    margin-bottom: 5px;
+  }
+  
+  .category-name {
+    font-weight: 600;
+    color: #ffffff;
+  }
+  
+  .category-cost {
+    color: #a5a0ff;
+    font-weight: 600;
+  }
+  
+  .category-percent {
+    color: #8a7fff;
+    font-size: 0.9em;
+    margin-left: 5px;
+  }
+</style>

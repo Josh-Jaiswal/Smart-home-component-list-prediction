@@ -107,51 +107,78 @@ class SmartHomePredictor:
         --------
         DataFrame with added composite score column
         """
+        # Default weights if not provided
         if weights is None:
-            weights = self.default_weights
+            weights = {
+                "efficiency": 0.3,
+                "reliability": 0.3,
+                "price": 0.4
+            }
         
-        # Ensure weights are normalized
+        # Normalize weights to sum to 1
         total = sum(weights.values())
-        normalized_weights = {k: v/total for k, v in weights.items()}
+        weights = {k: v/total for k, v in weights.items()}
+        
+        # Calculate price score (inverse of normalized price)
+        price_max = self.df['Price_INR'].max()
+        price_min = self.df['Price_INR'].min()
+        self.df['Price_Score'] = 1 - ((self.df['Price_INR'] - price_min) / (price_max - price_min))
         
         # Calculate composite score
         self.df['Composite_Score'] = (
-            normalized_weights['efficiency'] * self.df['Efficiency'] +
-            normalized_weights['reliability'] * self.df['Reliability'] -
-            normalized_weights['price'] * self.df['Normalized_Price'] * 10  # Scale to similar range as efficiency/reliability
+            weights['efficiency'] * self.df['Efficiency'] / 10 +
+            weights['reliability'] * self.df['Reliability'] / 10 +
+            weights['price'] * self.df['Price_Score']
         )
         
-        return self.df
+        # Add a small random factor to break ties (0.5% variation)
+        import random
+        self.df['Composite_Score'] = self.df['Composite_Score'] * [random.uniform(0.995, 1.005) for _ in range(len(self.df))]
+        
+        return self.df['Composite_Score']
     
-    def adjust_weights_from_priorities(self, priorities):
+    def adjust_weights_from_priorities(self, priorities, variant=0):
         """
-        Adjust weights based on user priorities
+        Adjust component selection weights based on user priorities
         
         Parameters:
         -----------
         priorities : dict
-            Dictionary with user priorities for energy_efficiency, security, ease_of_use, scalability
-            Each value should be between 1-10
-        
+            Dictionary with user priorities (energy_efficiency, security, ease_of_use, scalability)
+        variant : int, optional
+            Variant number to generate different configurations
+            
         Returns:
         --------
         dict
-            Adjusted weights for composite score calculation
+            Dictionary with adjusted weights for component selection
         """
-        # Normalize priorities
-        total = sum(priorities.values())
-        norm_priorities = {k: v/total for k, v in priorities.items()}
+        # Normalize priorities to sum to 1
+        total_priority = sum(priorities.values())
+        norm_priorities = {k: v/total_priority for k, v in priorities.items()}
         
-        # Map priorities to weights
+        # Base weights
         weights = {
-            "efficiency": 0.3 + (0.4 * norm_priorities.get("energy_efficiency", 0.25)),
-            "reliability": 0.3 + (0.3 * norm_priorities.get("security", 0.25) + 0.1 * norm_priorities.get("ease_of_use", 0.25)),
-            "price": 0.2 + (0.2 * (1 - norm_priorities.get("scalability", 0.25)))
+            "efficiency": 0.25 + (norm_priorities['energy_efficiency'] * 0.05),
+            "reliability": 0.25 + (norm_priorities['security'] * 0.05),
+            "price": 0.5 - ((norm_priorities['energy_efficiency'] + norm_priorities['security']) * 0.025)
         }
         
-        # Normalize weights
+        # Apply variations based on variant number
+        if variant == 1:
+            # Energy-Efficient: Strongly favor efficiency
+            weights['efficiency'] = min(0.6, weights['efficiency'] * 1.8)
+            weights['price'] = max(0.2, weights['price'] * 0.7)
+        elif variant == 2:
+            # High-Reliability: Strongly favor reliability
+            weights['reliability'] = min(0.6, weights['reliability'] * 1.8)
+            weights['price'] = max(0.2, weights['price'] * 0.7)
+        
+        # Normalize weights to sum to 1
         total = sum(weights.values())
-        return {k: v/total for k, v in weights.items()}
+        weights = {k: v/total for k, v in weights.items()}
+        
+        return weights
     
     def estimate_components_per_room(self, num_rooms, floor_area=None):
         """
@@ -224,20 +251,6 @@ class SmartHomePredictor:
     def optimize_component_selection(self, budget, component_requirements, weights=None):
         """
         Optimize component selection based on budget and requirements
-        
-        Parameters:
-        -----------
-        budget : float
-            Total budget in INR
-        component_requirements : dict
-            Dictionary with required number of components per category
-        weights : dict, optional
-            Weights for composite score calculation
-        
-        Returns:
-        --------
-        dict
-            Dictionary with selected components and their details
         """
         # Calculate composite scores if not already done
         if 'Composite_Score' not in self.df.columns:
@@ -260,6 +273,20 @@ class SmartHomePredictor:
         # Component requirements constraints
         for category, required_count in component_requirements.items():
             prob += lpSum([component_vars[idx] for idx, row in self.df.iterrows() if row['Category'] == category]) >= required_count
+        
+        # Add variety constraints - limit the maximum number of any single component type
+        for idx, row in self.df.iterrows():
+            # Limit each component to a maximum of 3 units
+            prob += component_vars[idx] <= 3
+        
+        # Add a constraint to limit the total number of components
+        # This will prevent having too many components in the solution
+        max_total_components = 30  # Adjust this value based on what's reasonable
+        prob += lpSum([component_vars[idx] for idx in component_vars]) <= max_total_components
+        
+        # Add a constraint to ensure we use at least 60% of the budget
+        min_budget_usage = budget * 0.6
+        prob += lpSum([component_vars[idx] * row['Price_INR'] for idx, row in self.df.iterrows()]) >= min_budget_usage
         
         # Solve the problem
         prob.solve(PULP_CBC_CMD(msg=False))
@@ -349,7 +376,7 @@ class SmartHomePredictor:
         
         return rooms
     
-    def generate_configuration(self, num_rooms, budget, priorities, floor_area=None):
+    def generate_configuration(self, num_rooms, budget, priorities, floor_area=None, variant=0):
         """
         Generate a complete smart home configuration based on user inputs
         
@@ -363,14 +390,32 @@ class SmartHomePredictor:
             Dictionary with user priorities (energy_efficiency, security, ease_of_use, scalability)
         floor_area : float, optional
             Total floor area in square meters
+        variant : int, optional
+            Variant number to generate different configurations (0, 1, or 2)
         
         Returns:
         --------
         dict
             Complete configuration with room allocations and component details
         """
-        # Adjust weights based on user priorities
+        # Adjust weights based on user priorities with slight variations for different configs
         weights = self.adjust_weights_from_priorities(priorities)
+        
+        # Apply variations based on variant number
+        if variant == 1:
+            # Variant 1: Slightly favor efficiency more
+            weights['efficiency'] = min(1.0, weights['efficiency'] * 1.2)
+            weights['price'] = max(0.1, weights['price'] * 0.9)
+            # Normalize weights
+            total = sum(weights.values())
+            weights = {k: v/total for k, v in weights.items()}
+        elif variant == 2:
+            # Variant 2: Slightly favor reliability more
+            weights['reliability'] = min(1.0, weights['reliability'] * 1.2)
+            weights['price'] = max(0.1, weights['price'] * 0.9)
+            # Normalize weights
+            total = sum(weights.values())
+            weights = {k: v/total for k, v in weights.items()}
         
         # Calculate composite scores
         self.calculate_composite_score(weights)
@@ -386,16 +431,70 @@ class SmartHomePredictor:
         # Allocate components to rooms
         room_allocations = self.generate_room_allocation(optimization_result['selected_components'], room_allocation)
         
+        # Add variant name
+        variant_names = [
+            "Balanced Configuration",
+            "Energy-Efficient Configuration",
+            "High-Reliability Configuration"
+        ]
+        
         # Return complete configuration
         return {
+            "name": variant_names[variant],
             "room_allocations": room_allocations,
             "optimization_result": optimization_result,
             "weights": weights,
             "priorities": priorities,
             "budget": budget,
             "total_cost": optimization_result['total_cost'],
-            "remaining_budget": optimization_result['remaining_budget']
+            "remaining_budget": optimization_result['remaining_budget'],
+            "variant": variant
         }
+        
+    def generate_multiple_configurations(self, num_rooms, budget, priorities, floor_area=None):
+        """
+        Generate multiple configurations with different optimization focuses
+        
+        Parameters:
+        -----------
+        num_rooms : int
+            Number of rooms in the house
+        budget : float
+            Total budget in INR
+        priorities : dict
+            Dictionary with user priorities
+        floor_area : float, optional
+            Total floor area in square meters
+        
+        Returns:
+        --------
+        list
+            List of configuration dictionaries
+        """
+        configurations = []
+        
+        # Configuration 1: Balanced (use original priorities)
+        balanced_config = self.generate_configuration(num_rooms, budget, priorities, floor_area, variant=0)
+        balanced_config['name'] = "Balanced Configuration"
+        configurations.append(balanced_config)
+        
+        # Configuration 2: Energy-Efficient (boost efficiency priority)
+        energy_priorities = priorities.copy()
+        energy_priorities['energy_efficiency'] = min(10, priorities['energy_efficiency'] * 1.5)
+        # Reduce price weight to allow for more expensive but efficient components
+        energy_config = self.generate_configuration(num_rooms, budget, energy_priorities, floor_area, variant=1)
+        energy_config['name'] = "Energy-Efficient Configuration"
+        configurations.append(energy_config)
+        
+        # Configuration 3: High-Reliability (boost security and reliability)
+        reliability_priorities = priorities.copy()
+        reliability_priorities['security'] = min(10, priorities['security'] * 1.5)
+        # This will indirectly boost reliability in the weight calculation
+        reliability_config = self.generate_configuration(num_rooms, budget, reliability_priorities, floor_area, variant=2)
+        reliability_config['name'] = "High-Reliability Configuration"
+        configurations.append(reliability_config)
+        
+        return configurations
     
     def visualize_component_distribution(self, configuration):
         """
