@@ -43,6 +43,10 @@ def submit():
         # Add config_index to each configuration
         config['config_index'] = i
         
+        # Add budget and calculate remaining budget
+        config['budget'] = budget
+        config['remaining_budget'] = budget - config['total_cost']
+        
         # Calculate category counts for each configuration
         category_counts = {}
         category_costs = {}

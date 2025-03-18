@@ -339,28 +339,6 @@
         </div>
 
         <!-- Detailed Room Allocations -->
-        <!-- In the head section, make sure you have the proper Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-        
-        <!-- For the configuration cards section -->
-        <div class="row mb-4">
-          {% for config in configurations %}
-          <div class="col-md-4 mb-3">
-            <div class="card config-card {% if loop.index0 == 0 %}active{% endif %}" data-config-index="{{ loop.index0 }}">
-              <div class="card-header">
-                <h5 class="mb-0">{{ config.name }}</h5>
-              </div>
-              <div class="card-body">
-                <p><strong>Total Cost:</strong> ₹{{ "{:,.2f}".format(config.total_cost) }}</p>
-                <p><strong>Components:</strong> {{ config.optimization_result.selected_components|length }}</p>
-                <button class="btn btn-primary view-config-btn">View Details</button>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        
-        <!-- For the room tabs section -->
         <div class="mt-4">
           <ul class="nav nav-tabs" id="roomTabs-{{ config_index }}" role="tablist">
             {% for room in config.room_allocations %}
@@ -378,11 +356,64 @@
             </li>
             {% endfor %}
           </ul>
+          
+          <div class="tab-content" id="roomTabsContent-{{ config_index }}">
+            {% for room in config.room_allocations %}
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                 id="{{ room.name|replace(' ', '-')|lower }}-{{ config_index }}" 
+                 role="tabpanel" 
+                 aria-labelledby="{{ room.name|replace(' ', '-')|lower }}-tab-{{ config_index }}">
+              <div class="room-card">
+                <h3 class="room-title">{{ room.name }}</h3>
+                <!-- Component Summary -->
+                <div class="mb-3">
+                  <h5>Component Summary</h5>
+                  <div class="d-flex flex-wrap">
+                    {% set category_counts = {} %}
+                    {% for comp in room.components %}
+                      {% if comp.Category in category_counts %}
+                        {% set _ = category_counts.update({comp.Category: category_counts[comp.Category] + 1}) %}
+                      {% else %}
+                        {% set _ = category_counts.update({comp.Category: 1}) %}
+                      {% endif %}
+                    {% endfor %}
+                    {% for category, count in category_counts.items() %}
+                    <span class="badge bg-info text-dark m-1 p-2">
+                      {{ count }} × {{ category }}
+                    </span>
+                    {% endfor %}
+                  </div>
+                </div>
+                <!-- Component Table -->
+                <table class="table table-striped component-table">
+                  <thead>
+                    <tr>
+                      <th>Component</th>
+                      <th>Category</th>
+                      <th>Price (₹)</th>
+                      <th>Efficiency</th>
+                      <th>Reliability</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for comp in room.components|sort(attribute='Category') %}
+                    <tr>
+                      <td>{{ comp.Component_Name }}</td>
+                      <td>{{ comp.Category }}</td>
+                      <td>₹{{ "{:,.2f}".format(comp.Price_INR) }}</td>
+                      <td>{{ "{:.1f}".format(comp.Efficiency) }}/10</td>
+                      <td>{{ "{:.1f}".format(comp.Reliability) }}/10</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
         
-        <!-- At the bottom of your file, update the JavaScript -->
         <script>
-          // Switch configuration details on button click
           document.addEventListener('DOMContentLoaded', function() {
             // Configuration switching
             document.querySelectorAll('.view-config-btn').forEach((btn) => {
@@ -404,16 +435,37 @@
               });
             });
         
-            // Make first configuration visible by default
-            if (document.querySelector('.config-details')) {
-              document.querySelector('.config-details').style.display = 'block';
-            }
-            
-            // Make sure Bootstrap tabs are working
-            var triggerTabList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
-            triggerTabList.forEach(function(triggerEl) {
-              // Ensure Bootstrap's tab functionality works
-              new bootstrap.Tab(triggerEl);
+            // Tab switching
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tabEl) {
+              tabEl.addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                // Get the target tab pane
+                var targetId = this.getAttribute('data-bs-target');
+                var target = document.querySelector(targetId);
+                if (!target) return;
+                
+                // Get the parent tab content container
+                var tabContent = target.parentElement;
+                
+                // Hide all tab panes in this container
+                tabContent.querySelectorAll('.tab-pane').forEach(function(pane) {
+                  pane.classList.remove('show', 'active');
+                });
+                
+                // Show the target tab pane
+                target.classList.add('show', 'active');
+                
+                // Update active state on tab buttons
+                var tabContainer = this.closest('.nav-tabs');
+                tabContainer.querySelectorAll('.nav-link').forEach(function(link) {
+                  link.classList.remove('active');
+                  link.setAttribute('aria-selected', 'false');
+                });
+                
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+              });
             });
           });
         </script>
