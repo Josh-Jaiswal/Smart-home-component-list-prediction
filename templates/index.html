@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Configuration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            margin-bottom: 50px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #34495e;
+        }
+        .slider-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .slider-value {
+            font-weight: bold;
+            color: white;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            position: absolute;
+            right: -15px;
+            top: 25px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            border-color: #3498db;
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        .priority-section {
+            background-color: #f0f7fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .priority-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-group-text {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        .form-range::-webkit-slider-thumb {
+            background: #3498db;
+        }
+        .form-range::-moz-range-thumb {
+            background: #3498db;
+        }
+        .form-range::-ms-thumb {
+            background: #3498db;
+        }
+        .priority-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: #3498db;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Home Configuration Planner</h1>
+        <p class="subtitle">Design your ideal smart home based on your preferences and budget</p>
+        
+        <form action="/submit" method="post">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cog"></i> Basic Configuration
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="budget" class="form-label">Budget (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" id="budget" name="budget" value="100000" min="10000" step="1000" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="num_rooms" class="form-label">Number of Rooms</label>
+                            <input type="number" class="form-control" id="num_rooms" name="num_rooms" value="5" min="1" max="15" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="priority-section">
+                <h3 class="priority-title"><i class="fas fa-sliders-h"></i> Set Your Priorities</h3>
+                <p class="text-center text-muted mb-4">Drag the sliders to indicate how important each factor is to you (1-10)</p>
+                
+                <div class="slider-container">
+                    <label for="energy_efficiency" class="form-label">
+                        <i class="fas fa-bolt priority-icon"></i> Energy Efficiency
+                    </label>
+                    <div class="d-flex align-items-center position-relative">
+                        <input type="range" class="form-range" id="energy_efficiency" name="energy_efficiency" min="1" max="10" value="5" oninput="updateSliderValue(this)">
+                        <span class="slider-value" id="energy_efficiency_value" style="background-color: #27ae60;">5</span>
+                    </div>
+                    <small class="text-muted">How important is energy saving and efficiency to you?</small>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="security" class="form-label">
+                        <i class="fas fa-shield-alt priority-icon"></i> Security
+                    </label>
+                    <div class="d-flex align-items-center position-relative">
+                        <input type="range" class="form-range" id="security" name="security" min="1" max="10" value="5" oninput="updateSliderValue(this)">
+                        <span class="slider-value" id="security_value" style="background-color: #e74c3c;">5</span>
+                    </div>
+                    <small class="text-muted">How important is home security and monitoring to you?</small>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="ease_of_use" class="form-label">
+                        <i class="fas fa-hand-pointer priority-icon"></i> Ease of Use
+                    </label>
+                    <div class="d-flex align-items-center position-relative">
+                        <input type="range" class="form-range" id="ease_of_use" name="ease_of_use" min="1" max="10" value="5" oninput="updateSliderValue(this)">
+                        <span class="slider-value" id="ease_of_use_value" style="background-color: #f39c12;">5</span>
+                    </div>
+                    <small class="text-muted">How important is user-friendly operation to you?</small>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="scalability" class="form-label">
+                        <i class="fas fa-expand-arrows-alt priority-icon"></i> Scalability
+                    </label>
+                    <div class="d-flex align-items-center position-relative">
+                        <input type="range" class="form-range" id="scalability" name="scalability" min="1" max="10" value="5" oninput="updateSliderValue(this)">
+                        <span class="slider-value" id="scalability_value" style="background-color: #9b59b6;">5</span>
+                    </div>
+                    <small class="text-muted">How important is future expansion and compatibility to you?</small>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-magic"></i> Generate Smart Home Configuration
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function updateSliderValue(slider) {
+            const valueDisplay = document.getElementById(slider.id + '_value');
+            valueDisplay.textContent = slider.value;
+            
+            // Update position based on value
+            const percent = (slider.value - slider.min) / (slider.max - slider.min);
+            const thumbWidth = 30; // Width of the thumb in pixels
+            const trackWidth = slider.offsetWidth - thumbWidth;
+            const offset = percent * trackWidth;
+            
+            valueDisplay.style.left = `${offset}px`;
+        }
+        
+        // Initialize all sliders on page load
+        window.onload = function() {
+            document.querySelectorAll('.form-range').forEach(slider => {
+                updateSliderValue(slider);
+            });
+        };
+    </script>
+</body>
+</html>
